@@ -115,8 +115,8 @@ std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::if
 				if ((op_code & 0b111) == 4) fl.seekg(1, fl.cur);
 			}
 			if (off_cnt > 0)	fl.read((char*)&offset, off_cnt);
-			if (offset > 0)		op1 += "+";
-			if (offset != 0)	op1 += std::to_string(offset);
+			if (conv(offset, off_cnt) > 0)		op1 += "+";
+			if (offset != 0)	op1 += std::to_string(conv(offset, off_cnt));
 			op1 += "]";
 			if (cnt > 1) {
 				if (dir == 1)	res += op1 + ", " + regs[1];
@@ -428,6 +428,23 @@ std::string disasm_code(std::string filename, int mode)
 			fl.read((char*)&a, 1);
 			result += "push byte " + std::to_string(a) + "\n";
 			break;
+
+		case 0x6C:
+			result += rep_pr + "insb\n";
+			rep_pr = "";
+			break;
+		case 0x6D:
+			result += rep_pr + "ins" + bytes_names_by_op_size[log2c(op_size) - 2] + "\n";
+			rep_pr = "";
+			break;
+		case 0x6E:
+			result += rep_pr + "outsb\n";
+			rep_pr = "";
+			break;
+		case 0x6F:
+			result += rep_pr + "outs" + bytes_names_by_op_size[log2c(op_size) - 2] + "\n";
+			rep_pr = "";
+			break;
 		case 0x70:
 			fl.read((char*)&a, 1);
 			result += "jo ";
@@ -682,6 +699,12 @@ std::string disasm_code(std::string filename, int mode)
 			fl.read((char*)&a, 1);
 			result += std::to_string(a) + "\n";
 			break;
+		case 0x84:
+			result += "test " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF) + "\n";
+			break;
+		case 0x85:
+			result += "test " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			break;
 		case 0x86:
 			result += "xchg " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF) + "\n";
 			break;
@@ -705,10 +728,16 @@ std::string disasm_code(std::string filename, int mode)
 			fl.seekg(-1, fl.cur);
 			result += "mov " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF, 1) + ", " + SREG_GET((a & 0b111000) >> 3) + "\n";
 			break;
+		case 0x8D:
+			result += "lea " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			break;
 		case 0x8E:
 			fl.read((char*)&a, 1);
 			fl.seekg(-1, fl.cur);
 			result += "mov " + SREG_GET((a & 0b111000) >> 3) + ", " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF);
+			break;
+		case 0x8F:
+			result += "pop " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0xFF) + "\n";
 			break;
 		case 0x90:
 			result += "nop\n";

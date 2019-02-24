@@ -1,2 +1,2 @@
 [BITS 16]
-        jmp     0x0:0xDEAD
+    lea     eax, [ebp-2]
