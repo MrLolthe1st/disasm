@@ -112,7 +112,7 @@ std::string get_reg1(int op_size, int ndx)
 		return REG_GET(op_size, map_tab[ndx]);
 	}
 }
-std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::ifstream &fl, int cnt, int dir, int mask, bool use = false)
+std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::ifstream &fl, int cnt, int dir, int mask, bool use = false, bool use_sizes = true, int o_s = 0)
 {
 	std::string res = ""; unsigned char op_code = 0;
 	//Read an opcode desc and regs
@@ -131,7 +131,10 @@ std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::if
 		int off_cnt = (op_code & 0b11000000) >> 6, offset = 0;
 		if ((op_code & 0b111) != 0x06 - mode || addr_size != (1 << (mode + 4)) || off_cnt > 0) {
 			//[es:si]
-			std::string op1 = bytes_names[op_size] + " [" + SREG_GET(seg_reg) + ":";
+			std::string op1 = "";
+			if (use_sizes)op1 += bytes_names[op_size];
+			else op1 += bytes_names[o_s / 2];
+			op1 += " [" + SREG_GET(seg_reg) + ":";
 			if (addr_size == 16) op1 += get_reg1(addr_size, op_code & 0b111);
 			else {
 				op1 += get_reg(addr_size, op_code & 0b111);
@@ -151,7 +154,10 @@ std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::if
 		{
 			unsigned long long addr = 0;
 			fl.read((char*)&addr, (1 << (mode + 4)) / 8);
-			std::string op1 = bytes_names[op_size] + " [" + SREG_GET(seg_reg) + ":" + std::to_string(addr) + "]";
+			std::string op1 = "";
+			if (use_sizes)op1 += bytes_names[op_size];
+			else op1 += bytes_names[o_s / 2];
+			op1 += " [" + SREG_GET(seg_reg) + ":" + std::to_string(addr) + "]";
 			if (cnt > 1) {
 				if (dir == 1)	res += op1 + ", " + regs[1];
 				else res += regs[1] + ", " + op1;
@@ -758,7 +764,7 @@ std::string disasm_code(std::string filename, int mode)
 			result += "mov " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF, 1) + ", " + SREG_GET((a & 0b111000) >> 3, true) + "\n";
 			break;
 		case 0x8D:
-			result += "lea " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF);
+			result += "lea " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF, false, false, 0);
 			break;
 		case 0x8E:
 			fl.read((char*)&a, 1);
@@ -1168,7 +1174,7 @@ std::string disasm_code(std::string filename, int mode)
 			fl.read((char*)&a, mode * 2 + 2);
 			result += "jmp ";
 			if (conv(a, mode * 2 + 2) >= 0) result += "+";
-			result += std::to_string(conv(a + 2 + mode * 2 + 2, mode * 2 + 2)) + "\n";
+			result += std::to_string(conv(a + 1 + mode * 2 + 2 + cur, mode * 2 + 2)) + "\n";
 			break;
 		case 0xEA:
 			fl.read((char*)&a, mode * 2 + 2);
@@ -1388,7 +1394,17 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		case 0x0F:
 			fl.read((char*)buffer, 1);
-
+			switch (*buffer)
+			{
+			case 0xb6:
+				result += "movzx " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF, false, false, 16);
+				break;
+			case 0xb7:
+				result += "movzx " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF, false, false, 32);
+				break;
+			default:
+				break;
+			}
 			break;
 		default:
 			if (op_size != (1 << (mode + 4)) || rep_pr == "")
