@@ -432,97 +432,97 @@ std::string disasm_code(std::string filename, int mode)
 			fl.read((char*)&a, 1);
 			result += "jo ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x71:
 			fl.read((char*)&a, 1);
 			result += "jno ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x72:
 			fl.read((char*)&a, 1);
 			result += "jc ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x73:
 			fl.read((char*)&a, 1);
 			result += "jnc ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x74:
 			fl.read((char*)&a, 1);
 			result += "jz ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x75:
 			fl.read((char*)&a, 1);
 			result += "jnz ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x76:
 			fl.read((char*)&a, 1);
 			result += "jna ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x77:
 			fl.read((char*)&a, 1);
 			result += "ja ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x78:
 			fl.read((char*)&a, 1);
 			result += "js ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x79:
 			fl.read((char*)&a, 1);
 			result += "jns ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7A:
 			fl.read((char*)&a, 1);
 			result += "jpe ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7B:
 			fl.read((char*)&a, 1);
 			result += "jpo ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7C:
 			fl.read((char*)&a, 1);
 			result += "jl ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7D:
 			fl.read((char*)&a, 1);
 			result += "jnl ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7E:
 			fl.read((char*)&a, 1);
 			result += "jng ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x7F:
 			fl.read((char*)&a, 1);
 			result += "jg ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 8)) + "\n";
+			result += std::to_string(conv(a, 1)) + "\n";
 			break;
 		case 0x80:
 			op_size = 8;
