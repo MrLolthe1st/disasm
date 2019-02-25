@@ -32,7 +32,9 @@ std::string SREG_GET(int f, bool a = false)
 {
 	if (f == 3 && !a)
 		return std::string(1, 0x7f);
-	return  (reg_names[(f)+SREG_OFFSET]);
+	return  (reg_names[((f)+SREG_OFFSET) % reg_names.size()]);
+
+
 }
 bool is_string(char c)
 {
@@ -1429,14 +1431,62 @@ std::string disasm_code(std::string filename, int mode)
 		read = false;
 	}
 	std::string q;
+	q.resize(result.length());
+	int z = 0;
 	for (size_t i = 0; i < result.length(); i++)
 	{
 		if (result[i] == 0x7F)
 		{
 			i += 1; continue;
 		}
-		q += std::string(1, result[i]);
+		q[z++] = result[i];
 	}
+	q.resize(z);
 	free(buffer);
 	return q;
+}
+
+char az[256] = { 0 };
+
+std::vector<el> build_structure(const std::string& asms)
+{
+	for (int i = 'a'; i <= 'z'; i++)
+		az[i] = i - 'a' + 10;
+	for (int i = 'A'; i <= 'Z'; i++)
+		az[i] = i - 'A' + 10;
+	for (int i = '0'; i <= '1'; i++)
+		az[i] = i - '0';
+	std::vector<el> res;
+	size_t idx = 0;
+	while (1)
+	{
+		if (idx >= asms.length()-1) break;
+		while (asms[idx] == ';') {
+			while (asms[++idx] != '\n');
+			idx++;
+		}
+		size_t idx1 = idx;
+		while (asms[++idx] != '\n');
+		std::string cmd = asms.substr(idx1, idx - idx1);
+		idx++;
+		el e;
+		e.cmd = cmd;
+		idx += 2;
+		idx1 = idx;
+		while (asms[++idx] != ' ');
+		std::string offs = asms.substr(idx1, idx - idx1);
+		idx++;
+		while (asms[++idx] != ' ');
+		idx++; idx1 = idx;
+		while (asms[++idx] != '\n');
+		std::string bts = asms.substr(idx1, idx - idx1);
+		++idx;
+		for (size_t i = 0; i < bts.length() / 2; i++) {
+			unsigned char z = (az[(int)bts[i * 2]] * 16) + (az[(int)bts[i * 2 + 1]]);
+			e.bytes.push_back(z);
+		}
+		e.offset = atoi(offs.c_str());
+		res.push_back(e);
+	}
+	return res;
 }

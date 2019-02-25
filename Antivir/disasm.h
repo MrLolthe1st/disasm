@@ -35,4 +35,10 @@ OPCODE: 8B,
 std::string disasm_code(std::string filename, int mode);
 void init_transitions();
 void disasm_init();
+typedef struct {
+	long long offset;
+	std::vector<unsigned char> bytes;
+	std::string cmd;
+}el;
+std::vector<el> build_structure(const std::string& asms);
 #endif
