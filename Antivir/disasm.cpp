@@ -28,6 +28,12 @@ void init_transitions()
 }
 
 
+std::string SREG_GET(int f, bool a = false)
+{
+	if (f == 3 && !a)
+		return std::string(1, 0x7f);
+	return  (reg_names[(f)+SREG_OFFSET]);
+}
 bool is_string(char c)
 {
 	return (c == ' ' || c == '\n' || c == '\t' || c == '\b' || (c >= 'a'&&c <= 'z') || (c >= 'A'&&c <= 'Z'));
@@ -75,7 +81,14 @@ std::string get_string(char x)
 }
 
 std::vector<std::string> bytes_names(65);
-
+std::string table("0123456789ABCDEF");
+std::string get_hex(unsigned char c)
+{
+	std::string a;
+	a.push_back(table[(int)c >> 4]);
+	a.push_back(table[(int)c & 15]);
+	return  a;
+}
 std::string get_reg(int op_size, int ndx)
 {
 	if (op_size == 8)
@@ -87,7 +100,17 @@ std::string get_reg1(int op_size, int ndx)
 {
 	if (op_size == 8)
 		return reg8_names[ndx];
-	else return REG_GET(op_size, map_tab[ndx]);
+	else {
+		if (ndx == 0)
+			return "bx+si";
+		if (ndx == 1)
+			return "bx+di";
+		if (ndx == 2)
+			return "bp+si";
+		if (ndx == 3)
+			return "bp+di";
+		return REG_GET(op_size, map_tab[ndx]);
+	}
 }
 std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::ifstream &fl, int cnt, int dir, int mask, bool use = false)
 {
@@ -155,9 +178,15 @@ std::string disasm_code(std::string filename, int mode)
 	unsigned char * buffer = (unsigned char*)malloc(8);
 	int seg_reg = 3, op_size = 1 << (mode + 4), addr_size = 1 << (mode + 4);
 	unsigned char last_byte = 0; std::string rep_pr = "";
+	long long cur = fl.tellg();
+	bool read = true;
 	while (1) {
 		last_byte = *buffer; int lb = 0;
 		unsigned long long a = 0;
+		if (!read) {
+			cur = fl.tellg();
+			read = true;
+		}
 		fl.read((char*)buffer, 1);
 
 		if (fl.eof())
@@ -447,99 +476,99 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		case 0x70:
 			fl.read((char*)&a, 1);
-			result += "jo ";
+			result += "jo short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x71:
 			fl.read((char*)&a, 1);
-			result += "jno ";
+			result += "jno short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x72:
 			fl.read((char*)&a, 1);
-			result += "jc ";
+			result += "jc short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x73:
 			fl.read((char*)&a, 1);
-			result += "jnc ";
+			result += "jnc short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x74:
 			fl.read((char*)&a, 1);
-			result += "jz ";
+			result += "jz short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x75:
 			fl.read((char*)&a, 1);
-			result += "jnz ";
+			result += "jnz short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x76:
 			fl.read((char*)&a, 1);
-			result += "jna ";
+			result += "jna short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x77:
 			fl.read((char*)&a, 1);
-			result += "ja ";
+			result += "ja short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x78:
 			fl.read((char*)&a, 1);
-			result += "js ";
+			result += "js short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x79:
 			fl.read((char*)&a, 1);
-			result += "jns ";
+			result += "jns short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7A:
 			fl.read((char*)&a, 1);
-			result += "jpe ";
+			result += "jpe short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7B:
 			fl.read((char*)&a, 1);
-			result += "jpo ";
+			result += "jpo short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7C:
 			fl.read((char*)&a, 1);
-			result += "jl ";
+			result += "jl short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7D:
 			fl.read((char*)&a, 1);
-			result += "jnl ";
+			result += "jnl short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7E:
 			fl.read((char*)&a, 1);
-			result += "jng ";
+			result += "jng short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x7F:
 			fl.read((char*)&a, 1);
-			result += "jg ";
+			result += "jg short ";
 			if (conv(a, 1) > 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0x80:
 			op_size = 8;
@@ -700,44 +729,44 @@ std::string disasm_code(std::string filename, int mode)
 			result += std::to_string(a) + "\n";
 			break;
 		case 0x84:
-			result += "test " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "test " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x85:
-			result += "test " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "test " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x86:
-			result += "xchg " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "xchg " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x87:
-			result += "xchg " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "xchg " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x88:
-			result += "mov " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, 1, 0xFF) + "\n";
+			result += "mov " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, 1, 0xFF);
 			break;
 		case 0x89:
-			result += "mov " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, 1, 0xFF) + "\n";
+			result += "mov " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, 1, 0xFF);
 			break;
 		case 0x8A:
-			result += "mov " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "mov " + parse_ops(mode, seg_reg, 8, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x8B:
-			result += "mov " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "mov " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x8C:
 			fl.read((char*)&a, 1);
 			fl.seekg(-1, fl.cur);
-			result += "mov " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF, 1) + ", " + SREG_GET((a & 0b111000) >> 3) + "\n";
+			result += "mov " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF, 1) + ", " + SREG_GET((a & 0b111000) >> 3, true) + "\n";
 			break;
 		case 0x8D:
-			result += "lea " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF) + "\n";
+			result += "lea " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 2, -1, 0xFF);
 			break;
 		case 0x8E:
 			fl.read((char*)&a, 1);
 			fl.seekg(-1, fl.cur);
-			result += "mov " + SREG_GET((a & 0b111000) >> 3) + ", " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF);
+			result += "mov " + SREG_GET((a & 0b111000) >> 3, true) + ", " + parse_ops(mode, seg_reg, 16, addr_size, fl, 1, 1, 0xFF);
 			break;
 		case 0x8F:
-			result += "pop " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0xFF) + "\n";
+			result += "pop " + parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0xFF);
 			break;
 		case 0x90:
 			result += "nop\n";
@@ -763,6 +792,12 @@ std::string disasm_code(std::string filename, int mode)
 		case 0x9D:
 			result += "popf\n";
 			break;
+		case 0x9E:
+			result += "sahf\n";
+			break;
+		case 0x9F:
+			result += "lahf\n";
+			break;
 
 		case 0xA0:
 			fl.read((char*)&a, op_size / 8);
@@ -771,6 +806,14 @@ std::string disasm_code(std::string filename, int mode)
 		case 0xA1:
 			fl.read((char*)&a, op_size / 8);
 			result += "mov " + get_reg(op_size, 0) + ", [" + SREG_GET(seg_reg) + ":" + std::to_string(a) + "]\n";
+			break;
+		case 0xA2:
+			fl.read((char*)&a, op_size / 8);
+			result += "mov [" + SREG_GET(seg_reg) + ":" + std::to_string(a) + "], al\n";
+			break;
+		case 0xA3:
+			fl.read((char*)&a, op_size / 8);
+			result += "mov [" + SREG_GET(seg_reg) + ":" + std::to_string(a) + "], " + get_reg(op_size, 0) + "\n";
 			break;
 		case 0xA4:
 			result += rep_pr + "movsb\n";
@@ -787,6 +830,14 @@ std::string disasm_code(std::string filename, int mode)
 			result += rep_pr + "cmps" + bytes_names_by_op_size[log2c(op_size) - 2] + "\n";
 			rep_pr = "";
 			break;
+		case 0xA8:
+			fl.read((char*)&a, op_size / 8);
+			result += "test al, [" + SREG_GET(seg_reg) + ":" + std::to_string(a) + "]\n";
+			break;
+		case 0xA9:
+			fl.read((char*)&a, op_size / 8);
+			result += "test " + get_reg(op_size, 0) + ", [" + SREG_GET(seg_reg) + ":" + std::to_string(a) + "]\n";
+			break;
 		case 0xAA:
 			result += rep_pr + "stosb\n";
 			rep_pr = "";
@@ -801,6 +852,14 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		case 0xAD:
 			result += rep_pr + "lods" + bytes_names_by_op_size[log2c(op_size) - 2] + "\n";
+			rep_pr = "";
+			break;
+		case 0xAE:
+			result += rep_pr + "scasb\n";
+			rep_pr = "";
+			break;
+		case 0xAF:
+			result += rep_pr + "scas" + bytes_names_by_op_size[log2c(op_size) - 2] + "\n";
 			rep_pr = "";
 			break;
 		case 0xC0:
@@ -891,6 +950,9 @@ std::string disasm_code(std::string filename, int mode)
 		case 0xCB:
 			result += "retf\n";
 			break;
+		case 0xCC:
+			result += "int 3\n";
+			break;
 		case 0xCD:
 			fl.read((char*)buffer, 1);
 			result += "int " + std::to_string(*buffer) + "\n";
@@ -902,6 +964,183 @@ std::string disasm_code(std::string filename, int mode)
 				result += "iretd\n";
 			else if (op_size == 16)
 				result += "iretb\n";
+			break;
+		case 0xD0:
+			op_size = 8;
+			fl.read((char*)&a, 1);
+			fl.seekg(-1, fl.cur);
+			a &= 0b00111000;
+			a >>= 3;
+			switch (a)
+			{
+			case 0:
+				result += "rol ";
+				break;
+			case 1:
+				result += "ror ";
+				break;
+			case 2:
+				result += "rcl ";
+				break;
+			case 3:
+				result += "rcr ";
+				break;
+			case 4:
+				result += "shl ";
+				break;
+			case 5:
+				result += "shr ";
+				break;
+			case 6:
+				result += "shl ";
+				break;
+			case 7:
+				result += "sar ";
+				break;
+			default:
+				break;
+			}
+			result += parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0b11000111, true) + ", ";
+			a = 1;
+			result += std::to_string(a) + "\n";
+			break;
+		case 0xD1:
+			fl.read((char*)&a, 1);
+			fl.seekg(-1, fl.cur);
+			a &= 0b00111000;
+			a >>= 3;
+			switch (a)
+			{
+			case 0:
+				result += "rol ";
+				break;
+			case 1:
+				result += "ror ";
+				break;
+			case 2:
+				result += "rcl ";
+				break;
+			case 3:
+				result += "rcr ";
+				break;
+			case 4:
+				result += "shl ";
+				break;
+			case 5:
+				result += "shr ";
+				break;
+			case 6:
+				result += "shl ";
+				break;
+			case 7:
+				result += "sar ";
+				break;
+			default:
+				break;
+			}
+			result += parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0b11000111, true) + ", ";
+			a = 1;
+			result += std::to_string(a) + "\n";
+			break;
+		case 0xD2:
+			op_size = 8;
+			fl.read((char*)&a, 1);
+			fl.seekg(-1, fl.cur);
+			a &= 0b00111000;
+			a >>= 3;
+			switch (a)
+			{
+			case 0:
+				result += "rol ";
+				break;
+			case 1:
+				result += "ror ";
+				break;
+			case 2:
+				result += "rcl ";
+				break;
+			case 3:
+				result += "rcr ";
+				break;
+			case 4:
+				result += "shl ";
+				break;
+			case 5:
+				result += "shr ";
+				break;
+			case 6:
+				result += "shl ";
+				break;
+			case 7:
+				result += "sar ";
+				break;
+			default:
+				break;
+			}
+			result += parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0b11000111, true) + ", ";
+			result += "cl\n";
+			break;
+		case 0xD3:
+			fl.read((char*)&a, 1);
+			fl.seekg(-1, fl.cur);
+			a &= 0b00111000;
+			a >>= 3;
+			switch (a)
+			{
+			case 0:
+				result += "rol ";
+				break;
+			case 1:
+				result += "ror ";
+				break;
+			case 2:
+				result += "rcl ";
+				break;
+			case 3:
+				result += "rcr ";
+				break;
+			case 4:
+				result += "shl ";
+				break;
+			case 5:
+				result += "shr ";
+				break;
+			case 6:
+				result += "shl ";
+				break;
+			case 7:
+				result += "sar ";
+				break;
+			default:
+				break;
+			}
+			result += parse_ops(mode, seg_reg, op_size, addr_size, fl, 1, 1, 0b11000111, true) + ", ";
+			result += "cl\n";
+			break;
+
+		case 0xE0:
+			fl.read((char*)&a, 1);
+			result += "loopnz near ";
+			if (conv(a, 1) >= 0) result += "+";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
+			break;
+		case 0xE1:
+			fl.read((char*)&a, 1);
+			result += "loopz near ";
+			if (conv(a, 1) >= 0) result += "+";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
+			break;
+		case 0xE2:
+			fl.read((char*)&a, 1);
+			result += "loop near ";
+			if (conv(a, 1) >= 0) result += "+";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
+			break;
+		case 0xE3:
+			fl.read((char*)&a, 1);
+			result += "JECXZ near ";
+			if (conv(a, 1) >= 0) result += "+";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0xE4:
 			fl.read((char*)&a, 1);
@@ -922,14 +1161,14 @@ std::string disasm_code(std::string filename, int mode)
 		case 0xE8:
 			fl.read((char*)&a, mode * 2 + 2);
 			result += "call ";
-			if (conv(a, mode * 2 + 2) >= 0) result += "+";
-			result += std::to_string(conv(a, mode * 2 + 2)) + "\n";
+			if (conv(a + cur + mode * 2 + 3, mode * 2 + 2) >= 0) result += "+";
+			result += std::to_string(conv(a + cur + mode * 2 + 3, mode * 2 + 2)) + "\n";
 			break;
 		case 0xE9:
 			fl.read((char*)&a, mode * 2 + 2);
-			result += "jmp far ";
+			result += "jmp ";
 			if (conv(a, mode * 2 + 2) >= 0) result += "+";
-			result += std::to_string(conv(a, mode * 2 + 2)) + "\n";
+			result += std::to_string(conv(a + 2 + mode * 2 + 2, mode * 2 + 2)) + "\n";
 			break;
 		case 0xEA:
 			fl.read((char*)&a, mode * 2 + 2);
@@ -939,9 +1178,9 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		case 0xEB:
 			fl.read((char*)&a, 1);
-			result += "jmp near ";
+			result += "jmp short ";
 			if (conv(a, 1) >= 0) result += "+";
-			result += std::to_string(conv(a, 1)) + "\n";
+			result += std::to_string(conv(a + 2 + cur, 1)) + "\n";
 			break;
 		case 0xEC:
 			result += "in al, dx\n";
@@ -954,12 +1193,6 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		case 0xEF:
 			result += "out dx, " + REG_GET(op_size, 0) + "\n";
-			break;
-		case 0xF8:
-			result += "clc\n";
-			break;
-		case 0xF9:
-			result += "stc\n";
 			break;
 		case 0xF2:
 			rep_pr = "repnz ";
@@ -1068,6 +1301,13 @@ std::string disasm_code(std::string filename, int mode)
 				fl.seekg((op_size / 8), fl.cur);
 			rep_pr = "";
 			break;
+
+		case 0xF8:
+			result += "clc\n";
+			break;
+		case 0xF9:
+			result += "stc\n";
+			break;
 		case 0xFA:
 			result += "cli\n";
 			break;
@@ -1158,10 +1398,29 @@ std::string disasm_code(std::string filename, int mode)
 			break;
 		};
 	ennnnd:
+		result += ";+" + std::to_string(cur) + " : ";
+		long long cr = fl.tellg();
+		fl.seekg(cur, fl.beg);
+		for (; cur < cr; cur++) {
+			unsigned char a;
+			fl.read((char*)&a, 1);
+			result += get_hex(a);
+		}
+		result += "\n";
 		seg_reg = 3;
 		op_size = (1 << (mode + 4));
 		addr_size = (1 << (mode + 4));
+		read = false;
+	}
+	std::string q;
+	for (size_t i = 0; i < result.length(); i++)
+	{
+		if (result[i] == 0x7F)
+		{
+			i += 1; continue;
+		}
+		q += std::string(1, result[i]);
 	}
 	free(buffer);
-	return result;
+	return q;
 }

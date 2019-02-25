@@ -12,7 +12,7 @@
 #define REG16_GET(f) (reg_names[REG_T_SIZE * f + REG16_OFFSET])
 #define REG32_GET(f) (reg_names[REG_T_SIZE * f + REG32_OFFSET])
 #define REG64_GET(f) (reg_names[REG_T_SIZE * f + REG64_OFFSET])
-#define SREG_GET(f) (reg_names[(f) + SREG_OFFSET])
+
 
 /*
 BITS 32 - OPCODE 66 PREFIX
