@@ -1,8 +1,26 @@
+/*
+	disasm.cpp - disassembler and other structures. Converts bytes to assembler code.
+	Simply logic recovery to pseudo C-like style. Main convertion to code, that will
+	be analyzed later will be in clogic.cpp.
+	Copyright (C) 2019  Novozhilov Alexandr (MrLolthe1st)
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <string>
 #include <fstream>
 #include "disasm.h"
 
-std::vector<std::string> opcodes_names = { "mov" };
+
+//There are main register table, sorted in intel-asm style (000 is ax, 001 is cx and e.g.)
 std::vector<std::string> reg_names = {
 	"ah", "al", "ax", "eax", "rax",
 	"ch", "cl", "cx", "ecx", "rcx",
@@ -15,11 +33,14 @@ std::vector<std::string> reg_names = {
 	"es", "cs", "ss", "ds", "fs", "gs"
 };
 
+//8-bit registers is excepted
 std::vector<std::string> reg8_names = {
 	"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"
 };
 
-void disasm_init() {
+void disasm_init()
+{
+
 }
 
 void init_transitions()
@@ -27,23 +48,28 @@ void init_transitions()
 
 }
 
-
+//Returns a segment register, ds will be replaced with 0x7F character(del).
 std::string SREG_GET(int f, bool a = false)
 {
 	if (f == 3 && !a)
 		return std::string(1, 0x7f);
+	//We're return by mod, because sometimes it greater, that table size
 	return  (reg_names[((f)+SREG_OFFSET) % reg_names.size()]);
-
-
 }
+
+//Checks if char C is string-char
 bool is_string(char c)
 {
 	return (c == ' ' || c == '\n' || c == '\t' || c == '\b' || (c >= 'a'&&c <= 'z') || (c >= 'A'&&c <= 'Z'));
-
 }
+
 std::vector<std::string> bytes_names_by_op_size = { "-", "b", "w", "d" };
+
 std::vector<int> addr_overrides = { 32, 16, 32 };
+
 std::vector<int> addr_overrides_1 = { 32, 16, 64 };
+
+//Computes a logarithm of power of two
 int log2c(int a)
 {
 	int cnt = 0;
@@ -54,6 +80,8 @@ int log2c(int a)
 	}
 	return cnt;
 }
+
+//Converts U 8-byte to Signed BTS-byte number
 long long conv(unsigned long long a, int bts)
 {
 	if (bts == 1)
@@ -64,6 +92,8 @@ long long conv(unsigned long long a, int bts)
 		return (int)a;
 	else return (long long)a;
 }
+
+//Returns string of char x
 std::string get_string(char x)
 {
 	// string class has a constructor 
@@ -82,8 +112,12 @@ std::string get_string(char x)
 	return s;
 }
 
+//O(1) access to dword, qword, and etc.
 std::vector<std::string> bytes_names(65);
+
+//O(1) convertation byte to hex-representation
 std::string table("0123456789ABCDEF");
+
 std::string get_hex(unsigned char c)
 {
 	std::string a;
@@ -91,18 +125,24 @@ std::string get_hex(unsigned char c)
 	a.push_back(table[(int)c & 15]);
 	return  a;
 }
+
+//Returns intel-style register name
 std::string get_reg(int op_size, int ndx)
 {
 	if (op_size == 8)
 		return reg8_names[ndx];
 	else return REG_GET(op_size, ndx);
 }
+
+//Crutch: mov [es:bp + 3], ...
 std::vector<int> map_tab = { 0, 0, 0, 0, 6, 7, 5, 3 };
+
 std::string get_reg1(int op_size, int ndx)
 {
 	if (op_size == 8)
 		return reg8_names[ndx];
 	else {
+		//Crutch: mov [bp + si], ...
 		if (ndx == 0)
 			return "bx+si";
 		if (ndx == 1)
@@ -114,6 +154,13 @@ std::string get_reg1(int op_size, int ndx)
 		return REG_GET(op_size, map_tab[ndx]);
 	}
 }
+
+//Parses representation of operands, provided next byte in ifstream.
+//Gets opcode, and masks it with mask.
+//There are 3 situations:
+//reg, reg		ax, bx
+//reg, mem		ax, [0xDEAD]
+//reg, reg_mem	ax, [bp + si]
 std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::ifstream &fl, int cnt, int dir, int mask, bool use = false, bool use_sizes = true, int o_s = 0)
 {
 	std::string res = ""; unsigned char op_code = 0;
@@ -131,6 +178,7 @@ std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::if
 	}
 	else {
 		int off_cnt = (op_code & 0b11000000) >> 6, offset = 0;
+
 		if ((op_code & 0b111) != 0x06 - mode || addr_size != (1 << (mode + 4)) || off_cnt > 0) {
 			//[es:si]
 			std::string op1 = "";
@@ -171,6 +219,8 @@ std::string parse_ops(int mode, int seg_reg, int op_size, int addr_size, std::if
 		return res;
 	return res + "\n";
 }
+
+//Disassembles the code
 std::string disasm_code(std::string filename, int mode)
 {
 	bytes_names[8] = "byte";
@@ -1446,9 +1496,8 @@ std::string disasm_code(std::string filename, int mode)
 	return q;
 }
 
-char az[256] = { 0 };
-
-std::vector<el> build_structure(const std::string& asms)
+bool prepared = false;
+void prepare()
 {
 	for (int i = 'a'; i <= 'z'; i++)
 		az[i] = i - 'a' + 10;
@@ -1456,11 +1505,27 @@ std::vector<el> build_structure(const std::string& asms)
 		az[i] = i - 'A' + 10;
 	for (int i = '0'; i <= '1'; i++)
 		az[i] = i - '0';
+}
+
+char az[256] = { 0 };
+
+//Builds a flexible structure from generated assembler code.
+std::vector<el> build_structure(const std::string& asms)
+{
+	if (!prepared)
+		prepare();
 	std::vector<el> res;
 	size_t idx = 0;
 	while (1)
 	{
-		if (idx >= asms.length()-1) break;
+		/*
+			; comment								\n
+			...
+			; comment								\n
+			command									\n
+			;+offset : HEX REPRESENTATION OF CODE	\n
+		*/
+		if (idx >= asms.length() - 1) break;
 		while (asms[idx] == ';') {
 			while (asms[++idx] != '\n');
 			idx++;
