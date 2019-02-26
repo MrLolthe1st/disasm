@@ -3,7 +3,9 @@
 using namespace std;
 int main()
 {
-	build_structure(disasm_code("ac", MODE_16));
+	std::string s = disasm_code("ac", MODE_16);
+	cout << s;
+	build_structure(s);
 	int a;
 	cin >> a;
 	return 0;

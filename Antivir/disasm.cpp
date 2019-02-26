@@ -1496,6 +1496,7 @@ std::string disasm_code(std::string filename, int mode)
 	return q;
 }
 
+char az[256] = { 0 };
 bool prepared = false;
 void prepare()
 {
@@ -1507,7 +1508,6 @@ void prepare()
 		az[i] = i - '0';
 }
 
-char az[256] = { 0 };
 
 //Builds a flexible structure from generated assembler code.
 std::vector<el> build_structure(const std::string& asms)
