@@ -20,7 +20,7 @@
 #include "disasm.h"
 
 
-//There are main register table, sorted in intel-asm style (000 is ax, 001 is cx and e.g.)
+//There is main register table, sorted in intel-asm style (000 is ax, 001 is cx and e.g.)
 std::vector<std::string> reg_names = {
 	"ah", "al", "ax", "eax", "rax",
 	"ch", "cl", "cx", "ecx", "rcx",
